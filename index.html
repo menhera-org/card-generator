@@ -1,0 +1,299 @@
+<!-- vim: set ts=4 sw=4 et ai : -->
+<!--
+    Copyright (C) 2021 Menhera.org developers.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Menhera.org Business Card Generator</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no'/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Noto+Sans+JP&display=swap" rel="stylesheet"/> 
+    <style>
+        /**/
+        :root {
+            min-width: 100%;
+            min-height: 100%;
+            display: block grid;
+        }
+
+        body {
+            display: block grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: max-content 1fr;
+            margin: 0;
+            font-family: 'Fira Sans', 'Noto Sans JP', system-ui, sans-serif;
+            justify-items: center;
+        }
+
+        input, select, button, textarea {
+            font: inherit;
+        }
+
+        #header {
+            overflow: hidden;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            left: 0;
+            background-color: #fff;
+            z-index: 2;
+        }
+
+        #cards {
+            width: 210mm;
+            height: 297mm;
+            background-color: #fff;
+            display: block flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            overflow: hidden;
+        }
+
+        menhera-card {
+            overflow: visible;
+            background-color: #fff;
+            font-size: 12pt;
+            position: relative;
+        }
+
+        menhera-card > .card-logotype {
+            margin-inline-start: .5em;
+            margin-block-start: .5em;
+            margin-block-end: .5em;
+            display: block;
+            block-size: 30%;
+            max-inline-size: 75%;
+        }
+
+        menhera-card > .card-title {
+            box-sizing: border-box;
+            font-size: 80%;
+            padding-inline-start: 25%;
+        }
+
+        menhera-card > .card-name {
+            font-size: 125%;
+            box-sizing: border-box;
+            padding-inline-start: 25%;
+        }
+
+        menhera-card > .card-handle {
+            font-size: 90%;
+            opacity: .5;
+            box-sizing: border-box;
+            padding-inline-start: 25%;
+        }
+
+        menhera-card > .card-contact {
+            font-size: 80%;
+            box-sizing: border-box;
+            border-block-start: solid .25rem #5eaf30;
+            position: relative;
+            inset-inline-start: -1rem;
+            inline-size: calc(2rem + 100%);
+            padding-inline-start: calc(1rem + 25%);
+            white-space: pre-wrap;
+            margin-block-start: .5em;
+        }
+
+        menhera-card > .card-date {
+            font-size: 60%;
+            position: absolute;
+            inset-block-end: 0;
+            inset-inline-end: 0;
+            padding-inline-end: 1em;
+            padding-block-end: .5em;
+        }
+
+        @page {
+            margin: 0;
+            size: 210mm 297mm;
+        }
+
+        @media screen {
+            #body {
+                background-color: #eee;
+            }
+
+            #header {
+                box-shadow: 0 .1rem .4rem #888;
+            }
+
+            #cards {
+                box-shadow: .1rem .1rem .2rem #888;
+                margin: 1rem;
+            }
+
+            menhera-card {
+                box-shadow: 0 0 .1rem #ccc;
+            }
+        }
+
+        @media print {
+            body {
+                grid-template-rows: 1fr;
+            }
+
+            #header {
+                display: none;
+            }
+        }
+    </style>
+    <template id="menhera-card">
+        <img class="card-logotype" src="logotype.svg"/>
+        <div class="card-title"></div>
+        <div class="card-name"></div>
+        <div class="card-handle"></div>
+        <div class="card-contact"></div>
+        <div class="card-date"></div>
+    </template>
+</head>
+<body>
+    <header id="header">
+        <h1>Menhera.org Buisiness Card Generator</h1>
+        <p>Output is in A4 paper size.</p>
+        <form id="controls">
+            <label>Width / mm: <input id="control-width" type="number" value="91" min="1" size="3"/></label>
+            <label>Height / mm: <input id="control-height" type="number" value="55" min="1" size="3"/></label>
+            <label>Column gap / mm: <input id="control-column-gap" type="number" value="4" min="0" size="2"/></label>
+            <label>Row gap / mm: <input id="control-row-gap" type="number" value="2" min="0" size="2"/></label>
+            <label>Align horizontal: <select id="control-align-horizontal">
+                <option value="start">Start</option>
+                <option value="center">Center</option>
+                <option value="end">End</option>
+            </select></label>
+            <label>Align vertical: <select id="control-align-vertical">
+                <option value="start">Start</option>
+                <option value="center">Center</option>
+                <option value="end">End</option>
+            </select></label>
+            <label>Job title: <input id="control-job-title" type="text"/></label>
+            <label>Name: <input id="control-name" type="text"/></label>
+            <label>Handle name: <input id="control-handle-name" type="text"/></label>
+            <label>Contact information (SNS, email, etc.): <textarea id="control-contact-info"></textarea></label>
+        </form>
+        <p><button id="button-print">Print</button></p>
+    </header>
+    <main id="cards"></main>
+    <script type="module">
+        //
+        customElements.define('menhera-card', class MenheraCard extends HTMLElement {
+            constructor() {
+                super();
+            }
+
+            connectedCallback() {
+                this.textContent = '';
+                this.append(document.querySelector('#menhera-card').content.cloneNode(true));
+            }
+
+            get jobTitle() {
+                return this.querySelector('.card-title').textContent;
+            }
+
+            set jobTitle(value) {
+                this.querySelector('.card-title').textContent = value;
+            }
+
+            get memberName() {
+                return this.querySelector('.card-name').textContent;
+            }
+
+            set memberName(value) {
+                this.querySelector('.card-name').textContent = value;
+            }
+
+            get handleName() {
+                return this.querySelector('.card-handle').textContent;
+            }
+
+            set handleName(value) {
+                this.querySelector('.card-handle').textContent = value;
+            }
+
+            get contactInfo() {
+                return this.querySelector('.card-contact').textContent;
+            }
+
+            set contactInfo(value) {
+                this.querySelector('.card-contact').textContent = value;
+            }
+
+            get date() {
+                return this.querySelector('.card-date').textContent;
+            }
+
+            set date(value) {
+                this.querySelector('.card-date').textContent = value;
+            }
+        });
+
+        const render = () => {
+            const PAPER_WIDTH = 210;
+            const PAPER_HEIGHT = 297;
+
+            const container = document.querySelector('#cards');
+            container.style.justifyContent = document.querySelector('#control-align-horizontal').value;
+            container.style.alignContent = document.querySelector('#control-align-vertical').value;
+            const width = +document.querySelector('#control-width').value;
+            const height = +document.querySelector('#control-height').value;
+            const columnGap = +document.querySelector('#control-column-gap').value;
+            const rowGap = +document.querySelector('#control-row-gap').value;
+            container.style.rowGap = rowGap + 'mm';
+            container.style.columnGap = columnGap + 'mm';
+            const countX = Math.floor((PAPER_WIDTH + columnGap) / (width + columnGap));
+            const countY = Math.floor((PAPER_HEIGHT + rowGap) / (height + rowGap));
+            const count = countX * countY;
+            const cards = document.querySelectorAll('#cards > menhera-card');
+            for (let i = 0, iMax = Math.max(count, cards.length); i < iMax; i++) {
+                if (i >= count) {
+                    cards[i].remove();
+                } else {
+                    const card = i < cards.length ? cards[i] : container.appendChild(document.createElement('menhera-card'));
+                    card.jobTitle = document.querySelector('#control-job-title').value;
+                    card.memberName = document.querySelector('#control-name').value;
+                    card.handleName = document.querySelector('#control-handle-name').value;
+                    card.contactInfo = document.querySelector('#control-contact-info').value;
+                    card.style.width = width + 'mm';
+                    card.style.height = height + 'mm';
+                    card.date = `${(new Date).getFullYear()}.${(new Date).getMonth() + 1}`;
+                }
+            }
+        };
+
+        [
+            '#control-width',
+            '#control-height',
+            '#control-column-gap',
+            '#control-row-gap',
+            '#control-job-title',
+            '#control-name',
+            '#control-handle-name',
+            '#control-contact-info',
+            '#control-align-horizontal',
+            '#control-align-vertical',
+        ].map((query) => document.querySelector(query)).forEach((control) => {
+            control.addEventListener('change', (ev) => render());
+        });
+
+        render();
+
+        document.querySelector('#button-print').addEventListener('click', (ev) => print());
+    </script>
+</body>
+</html>
